@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Radikoかんたん予約スケジューラー",
+  "version": "1.0",
+  "icons": {
+    "16": "予約アイコン(背景透過).png",
+    "48": "予約アイコン(背景透過).png",
+    "128": "予約アイコン(背景透過).png"
+  },
+  "description": "番組表を作って自動で切り替え・自動再生します",
+  "permissions": [
+    "tabs",
+    "alarms",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://radiko.jp/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "スケジュール設定"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
