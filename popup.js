@@ -1,24 +1,77 @@
 // グローバル変数
-let editingId = null; // 編集中アイテムのID
+let editingId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // --- 初期化処理 ---
   initDropdowns();
   loadSchedules();
+  initSettings(); // 設定周りの初期化
 
+  // --- イベントリスナー ---
   document.getElementById('addBtn').addEventListener('click', addOrUpdateSchedule);
   document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
+
+  // 画面切り替え
+  document.getElementById('toSettingsBtn').addEventListener('click', showSettingsView);
+  document.getElementById('backToMainBtn').addEventListener('click', showMainView);
 });
 
-// 曜日表示用の配列
+// ==========================================
+// 設定・画面遷移ロジック
+// ==========================================
+function initSettings() {
+  // 1. ダークモードの状態復元
+  chrome.storage.local.get(['darkMode'], (result) => {
+    const isDark = result.darkMode || false;
+    applyDarkMode(isDark);
+    document.getElementById('darkModeToggle').checked = isDark;
+  });
+
+  // 2. トグルスイッチの変更検知
+  document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+    const isDark = e.target.checked;
+    applyDarkMode(isDark);
+    chrome.storage.local.set({ darkMode: isDark });
+  });
+
+  // 3. アコーディオンの開閉動作
+  const headers = document.querySelectorAll('.settings-header');
+  headers.forEach(header => {
+    header.addEventListener('click', () => {
+      const item = header.parentElement;
+      item.classList.toggle('active');
+    });
+  });
+}
+
+function applyDarkMode(isDark) {
+  if (isDark) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+}
+
+function showSettingsView() {
+  document.getElementById('mainView').classList.add('hidden');
+  document.getElementById('settingsView').classList.remove('hidden');
+}
+
+function showMainView() {
+  document.getElementById('settingsView').classList.add('hidden');
+  document.getElementById('mainView').classList.remove('hidden');
+}
+
+// ==========================================
+// 以下、既存のスケジュールロジック（変更なし）
+// ==========================================
 const dayMap = ["日", "月", "火", "水", "木", "金", "土"];
 
-// ドロップダウンの初期化と連動処理
 function initDropdowns() {
   const regionSelect = document.getElementById('regionSelect');
   const prefectureSelect = document.getElementById('prefectureSelect');
   const stationSelect = document.getElementById('stationSelect');
 
-  // 地域プルダウン生成
   for (const [key, region] of Object.entries(stationData)) {
     const option = document.createElement('option');
     option.value = key;
@@ -26,7 +79,6 @@ function initDropdowns() {
     regionSelect.appendChild(option);
   }
 
-  // 地域変更時
   regionSelect.addEventListener('change', () => {
     prefectureSelect.innerHTML = '<option value="">都道府県を選択...</option>';
     stationSelect.innerHTML = '<option value="">放送局を選択...</option>';
@@ -47,7 +99,6 @@ function initDropdowns() {
     }
   });
 
-  // 都道府県変更時
   prefectureSelect.addEventListener('change', () => {
     stationSelect.innerHTML = '<option value="">放送局を選択...</option>';
     
@@ -76,37 +127,27 @@ function addOrUpdateSchedule() {
   const stationId = stationSelect.value;
   const stationName = stationSelect.options[stationSelect.selectedIndex]?.text;
 
-  // バリデーション
   if (!time) { alert("時間を入力してください"); return; }
   if (!stationId) { alert("放送局を選択してください"); return; }
 
-  // データ作成
   const newSchedule = {
-    id: editingId ? editingId : Date.now(), // 編集時はID維持
+    id: editingId ? editingId : Date.now(),
     day: parseInt(day),
     time: time,
     stationId: stationId,
     stationName: stationName,
-    // 再現用にエリア情報も保存（編集時に復元するため）
     regionVal: document.getElementById('regionSelect').value,
     prefVal: document.getElementById('prefectureSelect').value
   };
 
   chrome.storage.local.get(['schedules'], (result) => {
     let schedules = result.schedules || [];
-
     if (editingId) {
-      // 編集（既存IDのものを置換）
       const index = schedules.findIndex(s => s.id === editingId);
-      if (index !== -1) {
-        schedules[index] = newSchedule;
-      }
+      if (index !== -1) schedules[index] = newSchedule;
     } else {
-      // 新規追加
       schedules.push(newSchedule);
     }
-    
-    // ソート
     schedules.sort((a, b) => {
       const dayA = a.day === 0 ? 7 : a.day;
       const dayB = b.day === 0 ? 7 : b.day;
@@ -121,37 +162,27 @@ function addOrUpdateSchedule() {
   });
 }
 
-// 編集モードへの切り替え
 function editSchedule(id) {
   chrome.storage.local.get(['schedules'], (result) => {
     const schedules = result.schedules || [];
     const target = schedules.find(s => s.id === id);
     if (!target) return;
 
-    editingId = id; // 編集中のIDをセット
-
-    // フォームに値をセット
+    editingId = id;
     document.getElementById('daySelect').value = target.day;
     document.getElementById('timeInput').value = target.time;
-
-    // ドロップダウンの復元（changeイベントを発火させて中身を作る）
     const regionSelect = document.getElementById('regionSelect');
     regionSelect.value = target.regionVal || "";
     regionSelect.dispatchEvent(new Event('change'));
-
     const prefectureSelect = document.getElementById('prefectureSelect');
     prefectureSelect.value = target.prefVal || "";
     prefectureSelect.dispatchEvent(new Event('change'));
-
     const stationSelect = document.getElementById('stationSelect');
     stationSelect.value = target.stationId;
 
-    // ボタンの表示切替
     document.getElementById('addBtn').textContent = "変更を保存";
     document.getElementById('cancelBtn').style.display = "block";
-    
-    // タイトルを少し強調
-    document.querySelector('h2').textContent = "スケジュールの編集";
+    document.querySelector('#mainView h2').textContent = "スケジュールの編集";
   });
 }
 
@@ -165,7 +196,7 @@ function resetForm() {
   document.getElementById('stationSelect').value = "";
   document.getElementById('addBtn').textContent = "スケジュールに追加";
   document.getElementById('cancelBtn').style.display = "none";
-  document.querySelector('h2').textContent = "予約スケジュール登録";
+  document.querySelector('#mainView h2').textContent = "予約スケジュール登録";
 }
 
 function loadSchedules() {
@@ -173,7 +204,6 @@ function loadSchedules() {
     const schedules = result.schedules || [];
     const list = document.getElementById('scheduleList');
     const emptyMsg = document.getElementById('emptyMsg');
-    
     list.innerHTML = '';
 
     if (schedules.length === 0) {
@@ -182,26 +212,18 @@ function loadSchedules() {
       emptyMsg.style.display = 'none';
       schedules.forEach(item => {
         const li = document.createElement('li');
-        
-        // 表示テキスト
         const textDiv = document.createElement('div');
         textDiv.className = 'schedule-info';
         textDiv.innerHTML = `
           <div><span class="schedule-time">${dayMap[item.day]}曜 ${item.time}</span></div>
           <div class="schedule-station">${item.stationName}</div>
         `;
-        
-        // ボタンエリア
         const btnDiv = document.createElement('div');
         btnDiv.className = 'action-btns';
-
-        // 変更ボタン
         const editBtn = document.createElement('button');
         editBtn.textContent = '変更';
         editBtn.className = 'edit-btn';
         editBtn.onclick = () => editSchedule(item.id);
-
-        // 削除ボタン
         const delBtn = document.createElement('button');
         delBtn.textContent = '削除';
         delBtn.className = 'delete-btn';
@@ -209,7 +231,6 @@ function loadSchedules() {
 
         btnDiv.appendChild(editBtn);
         btnDiv.appendChild(delBtn);
-
         li.appendChild(textDiv);
         li.appendChild(btnDiv);
         list.appendChild(li);
@@ -224,7 +245,6 @@ function deleteSchedule(id) {
       const schedules = result.schedules || [];
       const newSchedules = schedules.filter(item => item.id !== id);
       chrome.storage.local.set({ schedules: newSchedules }, () => {
-        // もし編集中のものを削除したらフォームもリセット
         if (editingId === id) resetForm();
         loadSchedules();
       });

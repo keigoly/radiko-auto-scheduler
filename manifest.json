@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Radikoかんたん予約スケジューラー",
+  "name": "radikoかんたん予約スケジューラー",
   "version": "1.0.1",
   "icons": {
     "16": "icons.png",
