@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 350px;
+      font-family: sans-serif;
+      padding: 15px;
+      color: #333;
+    }
+    /* ▼▼▼ 変更・追加箇所 ▼▼▼ */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #007bff;
+      margin-bottom: 15px; /* input-groupとの間隔 */
+      padding-bottom: 5px;
+    }
+
+    h2 {
+      font-size: 16px;
+      margin: 0;
+      border-bottom: none; /* コンテナ側に線を移したので削除 */
+      padding-bottom: 0;
+    }
+
+    .settings-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: #666;
+      display: flex; /* アイコン位置調整 */
+      border-radius: 50%;
+      transition: background-color 0.2s;
+    }
+    .settings-btn:hover {
+      background-color: #f0f0f0;
+      color: #007bff;
+    }
+    /* ▲▲▲ 変更・追加箇所 ここまで ▲▲▲ */
+    .input-group {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    label {
+      font-size: 12px;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 2px;
+    }
+    select, input, button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    /* ボタンのレイアウト */
+    .btn-row {
+      display: flex;
+      gap: 5px;
+    }
+    button {
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 0;
+    }
+    #addBtn { background-color: #007bff; color: white; }
+    #addBtn:hover { background-color: #0056b3; }
+    
+    #cancelBtn { background-color: #6c757d; color: white; display: none; }
+    
+    /* リストのスタイル */
+    ul { list-style: none; padding: 0; margin: 0; }
+    li {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .schedule-info { font-size: 13px; line-height: 1.4; flex-grow: 1;}
+    .schedule-time { font-weight: bold; color: #007bff; margin-right: 5px; }
+    .schedule-station { font-size: 12px; color: #555; display: block;}
+    
+    /* 操作ボタンエリア */
+    .action-btns {
+      display: flex;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .edit-btn {
+      background-color: #28a745;
+      color: white;
+      padding: 4px 8px;
+      font-size: 12px;
+      width: auto;
+    }
+    .delete-btn {
+      background-color: #dc3545;
+      color: white;
+      padding: 4px 8px;
+      font-size: 12px;
+      width: auto;
+    }
+    .empty-msg {
+      text-align: center;
+      color: #888;
+      font-size: 12px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-row">
+    <h2>予約スケジュール登録</h2>
+    <button id="settingsBtn" class="settings-btn" title="設定">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </div>
+  <div class="input-group">
+    <label>曜日と時間</label>
+    <div style="display: flex; gap: 5px;">
+      <select id="daySelect" style="flex: 1;">
+        <option value="1">月曜日</option>
+        <option value="2">火曜日</option>
+        <option value="3">水曜日</option>
+        <option value="4">木曜日</option>
+        <option value="5">金曜日</option>
+        <option value="6">土曜日</option>
+        <option value="0">日曜日</option>
+      </select>
+      <input type="time" id="timeInput" required style="flex: 1;">
+    </div>
+
+    <label>エリア選択</label>
+    <select id="regionSelect">
+      <option value="">地域を選択...</option>
+    </select>
+    
+    <label>都道府県</label>
+    <select id="prefectureSelect" disabled>
+      <option value="">都道府県を選択...</option>
+    </select>
+
+    <label>放送局</label>
+    <select id="stationSelect" disabled>
+      <option value="">放送局を選択...</option>
+    </select>
+
+    <div class="btn-row">
+      <button id="cancelBtn">キャンセル</button>
+      <button id="addBtn">スケジュールに追加</button>
+    </div>
+  </div>
+
+  <h3>登録済みリスト</h3>
+  <ul id="scheduleList"></ul>
+  <div id="emptyMsg" class="empty-msg">まだ登録がありません</div>
+
+  <script src="stations.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
